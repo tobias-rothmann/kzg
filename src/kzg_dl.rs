@@ -9,8 +9,10 @@ pub struct KZG {
     pub pk_g2: Vec<G2Projective>,
 }
 
-pub type PolynomailCommitment = G1Projective;
+pub type PolynomialCommitment = G1Projective;
 pub type Witness = G1Projective;
+pub type Index = Scalar;
+pub type Evaluation = Scalar; 
 
 impl KZG {
 
@@ -28,15 +30,15 @@ impl KZG {
             })
     }
 
-    pub fn commit(&self, poly : &Poly) -> PolynomailCommitment {
+    pub fn commit(&self, poly : &Poly) -> PolynomialCommitment {
        Self::eval_on_pk_g1(&self, poly)
     }
 
-    pub fn verify(&self, c: PolynomailCommitment, poly: &Poly) -> bool {
+    pub fn verify(&self, c: PolynomialCommitment, poly: &Poly) -> bool {
         c == self.commit(poly)
     }
 
-    pub fn create_witness(&self, poly : &Poly, i: &Scalar) -> Witness {
+    pub fn create_witness(&self, poly : &Poly, i: &Index) -> Witness {
         let x_minus_i_poly = Poly::new(vec![-i, Scalar::one()]);
         let mut psi_upper_part = poly.clone();
         psi_upper_part -= &Poly::new(vec![poly.eval(i)]);
@@ -45,7 +47,11 @@ impl KZG {
         Self::eval_on_pk_g1(&self, &psi)
     }
 
-    
-
+    pub fn verify_eval(&self, c: &PolynomialCommitment, i: &Index, phi_eval_i : &Evaluation, w : &Witness) -> bool {
+        let e_C_g = pairing(&c.into(), &G2Projective::generator().into());
+        let e_check = pairing(&w.into(), &self.pk_g2[1].into()) 
+                        + pairing(&c.into(), &G2Projective::generator().into());
+        e_C_g == e_check
+    }
 
 }
