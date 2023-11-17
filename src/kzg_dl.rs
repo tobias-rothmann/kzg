@@ -7,7 +7,9 @@ use bls12_381::*;
 
 pub struct KZG {
     pub pk_g1: Vec<G1Projective>,
+    pub pk_h1: Vec<G1Projective>,
     pub pk_g2: Vec<G2Projective>,
+    pub pk_h2: Vec<G1Projective>,
 }
 
 pub type PolynomialCommitment = G1Projective;
@@ -24,9 +26,18 @@ impl KZG {
                 acc + self.pk_g1[i] * k
             })
     }
+
+    fn eval_on_pk_h1(&self, poly : &Poly) -> G1Projective {
+        poly.0
+            .iter()
+            .enumerate()
+            .fold(G1Projective::identity(), |acc, (i, k)| {
+                acc + self.pk_h1[i] * k
+            })
+    }
 }
 
-impl PolynomialCommitmentScheme<Scalar, Poly, PolynomialCommitment, Witness> for KZG {
+impl PolynomialCommitmentScheme<Scalar, (Poly,Poly), PolynomialCommitment, Witness> for KZG {
 
     /*
         The KZG as descirbed in section 3.2 in the original paper: 
@@ -34,16 +45,16 @@ impl PolynomialCommitmentScheme<Scalar, Poly, PolynomialCommitment, Witness> for
         implemented as poloynomial commitment scheme
      */
     
-
-    fn commit(&self, poly : &Poly) -> PolynomialCommitment {
-       Self::eval_on_pk_g1(&self, poly)
+    fn commit(&self, (poly, poly_prime) : &(Poly, Poly)) -> PolynomialCommitment {
+        Self::eval_on_pk_g1(&self, poly) + Self::eval_on_pk_h1(&self, poly_prime)
     }
 
-    fn verify(&self, c: PolynomialCommitment, poly: &Poly) -> bool {
-        c == self.commit(poly)
+    fn verify(&self, c: PolynomialCommitment, (poly, poly_prime) : &(Poly, Poly)) -> bool {
+        c == self.commit(&(poly.clone(), poly_prime.clone()))
     }
 
-    fn create_witness(&self, poly : &Poly, i: &Index) -> Witness {
+    // TODO
+    fn create_witness(&self, (poly, poly_prime) : &(Poly, Poly), i: &Index) -> Witness {
         let x_minus_i_poly = Poly::new(vec![-i, Scalar::one()]);
         let mut psi_upper_part = poly.clone();
         psi_upper_part -= &Poly::new(vec![poly.eval(i)]);
@@ -52,6 +63,7 @@ impl PolynomialCommitmentScheme<Scalar, Poly, PolynomialCommitment, Witness> for
         Self::eval_on_pk_g1(&self, &psi)
     }
 
+    // TODO
     fn verify_witness(&self, c: &PolynomialCommitment, i: &Index, phi_eval_i : &Evaluation, w : &Witness) -> bool {
         let e_c_g = pairing(&c.into(), &G2Projective::generator().into());
         let e_check = pairing(&w.into(), &(self.pk_g2[1] - G2Projective::generator()*i).into()) 
