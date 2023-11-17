@@ -1,8 +1,6 @@
 //  copied file from adria0's kzg implementation (https://github.com/adria0/a0kzg) with some added functionality
 //! This module provides an implementation of polinomials over bls12_381::Scalar
 
-use std::process::Output;
-
 use bls12_381::Scalar;
 
 /// A polinomial with bl12_381::Scalar factors
