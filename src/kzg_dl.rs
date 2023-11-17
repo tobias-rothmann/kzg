@@ -54,8 +54,8 @@ impl PolynomialCommitmentScheme<Scalar, Poly, PolynomialCommitment, Witness> for
 
     fn verify_witness(&self, c: &PolynomialCommitment, i: &Index, phi_eval_i : &Evaluation, w : &Witness) -> bool {
         let e_c_g = pairing(&c.into(), &G2Projective::generator().into());
-        let e_check = pairing(&w.into(), &self.pk_g2[1].into()) 
-                        + pairing(&c.into(), &G2Projective::generator().into());
+        let e_check = pairing(&w.into(), &(self.pk_g2[1] - G2Projective::generator()*i).into()) 
+                        + pairing(&G1Projective::generator().into(), &G2Projective::generator().into()) * phi_eval_i;
         e_c_g == e_check
     }
 
