@@ -229,6 +229,42 @@ impl std::ops::SubAssign<&Poly> for Poly {
     }
 }
 
+//extension by Tobias Rothmann //TODO not correct
+impl std::ops::Add<&Poly> for Poly {
+    type Output = Poly;
+    fn add(self, rhs: &Poly) -> Self::Output { 
+        let mut add: Vec<Scalar> = std::iter::repeat(Scalar::zero())
+            .take(std::cmp::max(self.0.len(), rhs.0.len()))
+            .collect();
+        for n in 0..std::cmp::max(self.0.len(), rhs.0.len()) {
+            if n >= self.0.len() {
+                add.push(rhs.0[n]);
+            } else if n < self.0.len() && n < rhs.0.len() {
+                add[n] = self.0[0] + rhs.0[n];
+            }
+        }
+        Poly(add)
+    }
+}
+
+//extension by Tobias Rothmann //TODO not correct
+impl std::ops::Sub<&Poly> for Poly {
+    type Output = Poly;
+    fn sub(self, rhs: &Poly) -> Self::Output { 
+        let mut sub: Vec<Scalar> = std::iter::repeat(Scalar::zero())
+            .take(std::cmp::max(self.0.len(), rhs.0.len()))
+            .collect();
+        for n in 0..std::cmp::max(self.0.len(), rhs.0.len()) {
+            if n >= self.0.len() {
+                sub.push(rhs.0[n]);
+            } else if n < self.0.len() && n < rhs.0.len() {
+                sub[n] = self.0[0] - rhs.0[n];
+            }
+        }
+        Poly(sub)
+    }
+}
+
 impl std::ops::Mul<&Poly> for &Poly {
     type Output = Poly;
     fn mul(self, rhs: &Poly) -> Self::Output {
